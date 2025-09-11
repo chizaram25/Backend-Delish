@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const User = require("../models/user");
+const User = require("../models/User");
 
 const protect = async (req, res, next) => {
   try {
@@ -31,12 +31,12 @@ const protect = async (req, res, next) => {
     return res.status(401).json({ error: "Token failed or expired" });
   }
   const verifyAdmin = async (req, res, next) => {
-    if (req.user && req.user.role === 'admin') {
+    if (req.user && req.user.role === "admin") {
       next();
     } else {
       return res.status(403).json({ error: "Access denied, admin only" });
     }
-  }
+  };
 };
 
 module.exports = protect;

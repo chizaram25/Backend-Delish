@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const User = require("../models/user");
+const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
@@ -17,9 +17,10 @@ const registerUser = async (req, res) => {
 
   try {
     const existing = await User.findOne({ email });
-    if (existing) return res.status(400).json({ error: "Email already in use" });
+    if (existing)
+      return res.status(400).json({ error: "Email already in use" });
 
-    const user = new User({ name, email, password });
+    const user = new User({ username: name, email, password });
     await user.save();
 
     const token = createToken(user);
@@ -55,7 +56,9 @@ const forgotPassword = async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (!user)
-      return res.status(404).json({ message: "User with this email doesn't exist" });
+      return res
+        .status(404)
+        .json({ message: "User with this email doesn't exist" });
 
     const resetToken = crypto.randomBytes(32).toString("hex");
     user.resetPasswordToken = resetToken;
@@ -100,7 +103,9 @@ const resetPassword = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(400).json({ message: "Invalid or expired reset token" });
+      return res
+        .status(400)
+        .json({ message: "Invalid or expired reset token" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);

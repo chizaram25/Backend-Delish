@@ -5,7 +5,7 @@ const protect = require('../middleware/authMiddleware');
 
 
 router.get('/', getMenuItems);
-router.post('/:id' , getMenuItemById);
+router.get('/:id' , getMenuItemById);
 router.get('/category/:catergory', getMenuByCategory);
 router.get('/type/:type', getMenuByType);
 

@@ -65,29 +65,51 @@ const forgotPassword = async (req, res) => {
     user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
     await user.save();
 
-    const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
+    const resetLink = `http://localhost:3000/reset-password/${resetToken}`;
 
-    // Set Nodemailer
+    // Check if email credentials are configured
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      console.log("Email not configured. Reset token:", resetToken);
+      return res.json({ 
+        message: "Reset token generated (email not configured)",
+        resetToken: resetToken // Only for development
+      });
+    }
+
+    // Set Nodemailer with improved Gmail configuration
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false, // true for 465, false for other ports
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        pass: process.env.EMAIL_PASS, // This should be an App Password
       },
+      tls: {
+        rejectUnauthorized: false
+      }
     });
 
     const mailOptions = {
+      from: process.env.EMAIL_USER,
       to: user.email,
       subject: "Password Reset Request",
       html: `<p>Click the link below to reset your password:</p>
              <a href="${resetLink}">${resetLink}</a>
-             <p>This link will expire in 1 hour.</p>`,
+             <p>This link will expire in 1 hour.</p>
+             <p>Your reset token is: ${resetToken}</p>`,
     };
 
-    await transporter.sendMail(mailOptions);
-    res.json({ message: "Reset password email sent." });
+    try {
+      await transporter.sendMail(mailOptions);
+      res.json({ message: "Reset password email sent." });
+    } catch (emailError) {
+      console.error("Email sending failed:", emailError.message);
+      // Still respond with success to prevent email enumeration attacks
+      res.json({ message: "If the email exists, a reset link has been sent." });
+    }
   } catch (err) {
-    console.error(err.message);
+    console.error("Forgot password error:", err.message);
     res.status(500).json({ message: "Server error" });
   }
 };
